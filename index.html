@@ -788,8 +788,8 @@ function muscleSVG(exId) {
     <ellipse cx="32" cy="87" rx="4" ry="5.5" fill="${bc('calf')}" opacity="0.9"/>`;
 
   const vb = '0 0 50 95';
-  const fsv = `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">${body()}${frontMuscles(fh)}</svg>`;
-  const bsv = `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">${body()}${backMuscles(bh)}</svg>`;
+  const fsv = `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">${body()}${frontMuscles()}</svg>`;
+  const bsv = `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">${body()}${backMuscles()}</svg>`;
   return `<div class="muscle-fig">${fsv}${bsv}</div>`;
 }
 
