@@ -349,8 +349,8 @@
       display: grid;
       grid-template-columns: 22px 1fr 1fr 36px;
       gap: 6px;
-      align-items: start;
-      padding: 8px 10px 6px;
+      align-items: center;
+      padding: 8px 10px;
       border-radius: var(--r-sm);
       border: 1px solid var(--border);
       margin-bottom: 5px;
@@ -362,7 +362,7 @@
 
     .set-num {
       font-family: var(--font-mono); font-size: 10px; color: var(--text-3);
-      text-align: center; padding-top: 12px;
+      text-align: center;
     }
 
     .set-row.done .set-num { color: var(--accent); }
@@ -383,29 +383,43 @@
     .set-inp::placeholder { color: var(--text-4); }
     .set-row.done .set-inp { color: rgba(240,240,240,0.65); }
 
-    /* chips inside set rows */
-    .chip-strip {
-      display: flex; gap: 3px; overflow-x: auto; scrollbar-width: none;
-      padding: 4px 0 2px; width: 100%;
+    /* quick-select chips below sets */
+    .quick-chips {
+      padding: 8px 10px 4px;
+      border-top: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 5px;
     }
 
-    .chip-strip::-webkit-scrollbar { display: none; }
+    .qc-row { display: flex; align-items: center; gap: 6px; }
 
-    .val-chip {
+    .qc-label {
+      font-family: var(--font-mono); font-size: 8px; font-weight: 700;
+      letter-spacing: 0.12em; color: var(--text-4); width: 26px; flex-shrink: 0;
+    }
+
+    .qc-strip {
+      display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; flex: 1;
+    }
+
+    .qc-strip::-webkit-scrollbar { display: none; }
+
+    .qc-chip {
       flex-shrink: 0;
-      font-family: var(--font-mono); font-size: 9px;
-      padding: 2px 5px; border: 1px solid var(--border);
-      border-radius: 3px; cursor: pointer;
-      color: var(--text-4); background: transparent;
-      transition: all var(--t);
+      font-family: var(--font-mono); font-size: 10px;
+      padding: 3px 8px; border: 1px solid var(--border);
+      border-radius: 4px; cursor: pointer;
+      color: var(--text-3); background: transparent;
+      transition: all var(--t); min-height: 26px;
+      display: flex; align-items: center;
     }
 
-    .val-chip:active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); transform: scale(0.93); }
+    .qc-chip:active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+    .qc-chip.active { border-color: rgba(0,255,135,0.5); color: var(--accent); }
 
     .set-chk {
       width: 30px; height: 30px; border: 1.5px solid var(--border-2); border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: all var(--t); flex-shrink: 0; margin-top: 6px;
+      cursor: pointer; transition: all var(--t); flex-shrink: 0;
     }
 
     .set-chk:active { transform: scale(0.88); }
@@ -518,7 +532,6 @@
 <div id="app">
   <header class="hdr">
     <div class="logo">IRON<em>LOG</em></div>
-    <div class="hdr-date" id="hdrDate"></div>
   </header>
 
   <div class="content">
@@ -872,15 +885,6 @@ function updateTimerDisplay() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// HEADER
-// ─────────────────────────────────────────────────────────────
-function initHeader() {
-  document.getElementById('hdrDate').textContent = new Date().toLocaleDateString('en-US',{
-    weekday:'short', month:'short', day:'numeric'
-  }).toUpperCase();
-}
-
-// ─────────────────────────────────────────────────────────────
 // DAY SELECTOR
 // ─────────────────────────────────────────────────────────────
 function renderDaySel() {
@@ -897,6 +901,7 @@ function renderDaySel() {
 // ─────────────────────────────────────────────────────────────
 const W_CHIPS = [5,10,15,20,25,30,35,40,50,60,70,80,90,100,120];
 const R_CHIPS = [5,6,8,10,12,15,20];
+const lastFocused = {}; // eid -> {el, f, si}
 
 function renderWorkout() {
   const wrap = document.getElementById('workoutWrap');
@@ -970,22 +975,28 @@ function buildExCard(ex, sd, reps, lastW) {
         <div class="set-field">
           <div class="set-field-lbl">KG</div>
           <input class="set-inp" type="number" inputmode="decimal" placeholder="—" value="${w}" data-eid="${ex.id}" data-si="${i}" data-f="w">
-          <div class="chip-strip">
-            ${W_CHIPS.map(v=>`<span class="val-chip" data-v="${v}" data-f="w" data-eid="${ex.id}" data-si="${i}">${v}</span>`).join('')}
-          </div>
         </div>
         <div class="set-field">
           <div class="set-field-lbl">REPS</div>
           <input class="set-inp" type="number" inputmode="numeric" placeholder="—" value="${r}" data-eid="${ex.id}" data-si="${i}" data-f="r">
-          <div class="chip-strip">
-            ${R_CHIPS.map(v=>`<span class="val-chip" data-v="${v}" data-f="r" data-eid="${ex.id}" data-si="${i}">${v}</span>`).join('')}
-          </div>
         </div>
         <div class="set-chk" data-eid="${ex.id}" data-si="${i}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
         </div>
       </div>`;
   }
+
+  const quickChips = `
+    <div class="quick-chips" data-eid="${ex.id}">
+      <div class="qc-row">
+        <span class="qc-label">KG</span>
+        <div class="qc-strip">${W_CHIPS.map(v=>`<span class="qc-chip" data-f="w" data-v="${v}">${v}</span>`).join('')}</div>
+      </div>
+      <div class="qc-row">
+        <span class="qc-label">REPS</span>
+        <div class="qc-strip">${R_CHIPS.map(v=>`<span class="qc-chip" data-f="r" data-v="${v}">${v}</span>`).join('')}</div>
+      </div>
+    </div>`;
 
   return `
     <div class="ex-card${allDone?' done':''}" data-eid="${ex.id}">
@@ -1013,6 +1024,7 @@ function buildExCard(ex, sd, reps, lastW) {
         ${setsHtml}
         <button class="add-set-btn" data-eid="${ex.id}">+ Satz hinzufügen</button>
       </div>
+      ${quickChips}
     </div>`;
 }
 
@@ -1036,6 +1048,14 @@ function attachWorkoutListeners(wrap, sd) {
 
   wrap.querySelectorAll('.set-inp').forEach(inp => {
     inp.addEventListener('click', e => e.stopPropagation());
+    inp.addEventListener('focus', () => {
+      lastFocused[inp.dataset.eid] = {el: inp, f: inp.dataset.f, si: +inp.dataset.si};
+      // highlight matching chip type
+      const qc = wrap.querySelector(`.quick-chips[data-eid="${inp.dataset.eid}"]`);
+      if (qc) {
+        qc.querySelectorAll('.qc-chip').forEach(c => c.classList.toggle('active', c.dataset.f === inp.dataset.f));
+      }
+    });
     inp.addEventListener('change', () => {
       const {eid,si,f} = inp.dataset;
       const idx = +si;
@@ -1050,12 +1070,20 @@ function attachWorkoutListeners(wrap, sd) {
     });
   });
 
-  wrap.querySelectorAll('.val-chip').forEach(chip => {
+  wrap.querySelectorAll('.qc-chip').forEach(chip => {
     chip.addEventListener('click', e => {
       e.stopPropagation();
-      const {v,f,eid,si} = chip.dataset;
-      const inp = wrap.querySelector(`.set-inp[data-eid="${eid}"][data-si="${si}"][data-f="${f}"]`);
-      if (inp) { inp.value = v; inp.dispatchEvent(new Event('change')); }
+      const eid = chip.closest('.quick-chips').dataset.eid;
+      const {v, f} = chip.dataset;
+      const focused = lastFocused[eid];
+      if (focused && focused.f === f) {
+        focused.el.value = v;
+        focused.el.dispatchEvent(new Event('change'));
+      } else {
+        // fill first empty input of that type
+        const inp = wrap.querySelector(`.set-inp[data-eid="${eid}"][data-f="${f}"]`);
+        if (inp) { inp.value = v; inp.dispatchEvent(new Event('change')); lastFocused[eid] = {el:inp,f,si:+inp.dataset.si}; }
+      }
     });
   });
 
@@ -1268,7 +1296,6 @@ document.querySelectorAll('.nav-item').forEach(item=>item.addEventListener('clic
 // ─────────────────────────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────────────────────────
-initHeader();
 renderDaySel();
 renderWorkout();
 
