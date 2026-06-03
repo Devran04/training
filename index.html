@@ -383,38 +383,6 @@
     .set-inp::placeholder { color: var(--text-4); }
     .set-row.done .set-inp { color: rgba(240,240,240,0.65); }
 
-    /* quick-select chips below sets */
-    .quick-chips {
-      padding: 8px 10px 4px;
-      border-top: 1px solid var(--border);
-      display: flex; flex-direction: column; gap: 5px;
-    }
-
-    .qc-row { display: flex; align-items: center; gap: 6px; }
-
-    .qc-label {
-      font-family: var(--font-mono); font-size: 8px; font-weight: 700;
-      letter-spacing: 0.12em; color: var(--text-4); width: 26px; flex-shrink: 0;
-    }
-
-    .qc-strip {
-      display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; flex: 1;
-    }
-
-    .qc-strip::-webkit-scrollbar { display: none; }
-
-    .qc-chip {
-      flex-shrink: 0;
-      font-family: var(--font-mono); font-size: 10px;
-      padding: 3px 8px; border: 1px solid var(--border);
-      border-radius: 4px; cursor: pointer;
-      color: var(--text-3); background: transparent;
-      transition: all var(--t); min-height: 26px;
-      display: flex; align-items: center;
-    }
-
-    .qc-chip:active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
-    .qc-chip.active { border-color: rgba(0,255,135,0.5); color: var(--accent); }
 
     .set-chk {
       width: 30px; height: 30px; border: 1.5px solid var(--border-2); border-radius: 50%;
@@ -705,39 +673,64 @@ const PLAN = {
 
 const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 
-// Per-exercise muscle highlights: { f: front muscle IDs, b: back muscle IDs }
+// Per-exercise muscle highlights: hi = primary (most worked), lo = secondary (supporting)
 const EX_M = {
-  mo1:{f:['upec','delt'],b:[]},  mo2:{f:['pec','upec','delt'],b:[]},
-  mo3:{f:['bic'],b:['lat','rdelt']},  mo4:{f:[],b:['mtrap','rhomb','rdelt']},
-  mo5:{f:['pec','upec','delt'],b:[]},  mo6:{f:[],b:['lat']},
-  tu1:{f:['delt'],b:['rdelt','trap']},  tu2:{f:['delt'],b:['rdelt']},
-  tu3:{f:[],b:['rdelt','rhomb']},  tu4:{f:[],b:['tri']},  tu5:{f:[],b:['tri']},
-  tu6:{f:['bic'],b:[]},  tu7:{f:['bic'],b:[]},
-  we1:{f:[],b:[]},  we2:{f:['quad'],b:['glute','ham']},  we3:{f:['quad'],b:[]},
-  we4:{f:[],b:['ham']},  we5:{f:['calf'],b:['calf']},  we6:{f:['abs'],b:[]},
-  th1:{f:['upec','delt'],b:[]},  th2:{f:['pec','upec','delt'],b:[]},
-  th3:{f:['bic'],b:['lat','mtrap']},  th4:{f:[],b:['lat']},
-  th5:{f:[],b:['mtrap','rhomb']},  th6:{f:['bic'],b:['lat']},
-  fr1:{f:['delt'],b:['rdelt','trap']},  fr2:{f:['delt'],b:['rdelt']},
-  fr3:{f:[],b:['rdelt']},  fr4:{f:['bic'],b:[]},  fr5:{f:['bic'],b:[]},
-  fr6:{f:[],b:['tri']},  fr7:{f:[],b:['tri']},
-  sa1:{f:[],b:[]},  sa2:{f:['quad'],b:['glute','ham']},  sa3:{f:['quad'],b:[]},
-  sa4:{f:[],b:['ham']},  sa5:{f:['calf'],b:['calf']},  sa6:{f:['abs'],b:[]}
+  mo1:{fh:['upec','delt'],fl:[],bh:[],bl:[]},
+  mo2:{fh:['pec','delt'],fl:['upec'],bh:[],bl:[]},
+  mo3:{fh:['bic'],fl:[],bh:['lat'],bl:['rdelt']},
+  mo4:{fh:[],fl:[],bh:['mtrap','rhomb'],bl:['rdelt']},
+  mo5:{fh:['pec','delt'],fl:['upec'],bh:[],bl:[]},
+  mo6:{fh:[],fl:[],bh:['lat'],bl:[]},
+  tu1:{fh:['delt'],fl:[],bh:['rdelt'],bl:['trap']},
+  tu2:{fh:['delt'],fl:[],bh:['rdelt'],bl:[]},
+  tu3:{fh:[],fl:[],bh:['rdelt'],bl:['rhomb']},
+  tu4:{fh:[],fl:[],bh:['tri'],bl:[]},
+  tu5:{fh:[],fl:[],bh:['tri'],bl:[]},
+  tu6:{fh:['bic'],fl:[],bh:[],bl:[]},
+  tu7:{fh:['bic'],fl:[],bh:[],bl:[]},
+  we1:{fh:[],fl:[],bh:[],bl:[]},
+  we2:{fh:['quad'],fl:[],bh:['glute'],bl:['ham']},
+  we3:{fh:['quad'],fl:[],bh:[],bl:[]},
+  we4:{fh:[],fl:[],bh:['ham'],bl:[]},
+  we5:{fh:['calf'],fl:[],bh:['calf'],bl:[]},
+  we6:{fh:['abs'],fl:[],bh:[],bl:[]},
+  th1:{fh:['upec','delt'],fl:[],bh:[],bl:[]},
+  th2:{fh:['pec','delt'],fl:['upec'],bh:[],bl:[]},
+  th3:{fh:[],fl:['bic'],bh:['lat','mtrap'],bl:['rhomb','rdelt']},
+  th4:{fh:[],fl:[],bh:['lat'],bl:['mtrap']},
+  th5:{fh:[],fl:[],bh:['mtrap','rhomb'],bl:[]},
+  th6:{fh:['bic'],fl:[],bh:['lat'],bl:[]},
+  fr1:{fh:['delt'],fl:[],bh:['rdelt'],bl:['trap']},
+  fr2:{fh:['delt'],fl:[],bh:['rdelt'],bl:[]},
+  fr3:{fh:[],fl:[],bh:['rdelt'],bl:[]},
+  fr4:{fh:['bic'],fl:[],bh:[],bl:[]},
+  fr5:{fh:['bic'],fl:[],bh:[],bl:[]},
+  fr6:{fh:[],fl:[],bh:['tri'],bl:[]},
+  fr7:{fh:[],fl:[],bh:['tri'],bl:[]},
+  sa1:{fh:[],fl:[],bh:[],bl:[]},
+  sa2:{fh:['quad'],fl:[],bh:['glute'],bl:['ham']},
+  sa3:{fh:['quad'],fl:[],bh:[],bl:[]},
+  sa4:{fh:[],fl:[],bh:['ham'],bl:[]},
+  sa5:{fh:['calf'],fl:[],bh:['calf'],bl:[]},
+  sa6:{fh:['abs'],fl:[],bh:[],bl:[]}
 };
 
 // ─────────────────────────────────────────────────────────────
 // MUSCLE SVG BUILDER
 // ─────────────────────────────────────────────────────────────
 function muscleSVG(exId) {
-  const m = EX_M[exId] || {f:[],b:[]};
-  const fh = new Set(m.f);
-  const bh = new Set(m.b);
-  const A = 'var(--accent)';
-  const D = '#222';
-  const B = '#181818';
-  const O = '#2C2C2C';
-  const fc = id => fh.has(id) ? A : D;
-  const bc = id => bh.has(id) ? A : D;
+  const m = EX_M[exId] || {fh:[],fl:[],bh:[],bl:[]};
+  const fhi = new Set(m.fh); // front primary
+  const flo = new Set(m.fl); // front secondary
+  const bhi = new Set(m.bh); // back primary
+  const blo = new Set(m.bl); // back secondary
+  const HI = '#DD1A1A';  // vivid red — primary muscles
+  const LO = '#6B1212';  // dark muted red — secondary muscles
+  const D = '#1E1E1E';   // inactive
+  const B = '#181818';   // body base
+  const O = '#2C2C2C';   // outline
+  const fc = id => fhi.has(id) ? HI : flo.has(id) ? LO : D;
+  const bc = id => bhi.has(id) ? HI : blo.has(id) ? LO : D;
 
   // shared body outline shapes (same for front & back)
   const body = (hi) => {
@@ -899,9 +892,6 @@ function renderDaySel() {
 // ─────────────────────────────────────────────────────────────
 // WORKOUT
 // ─────────────────────────────────────────────────────────────
-const W_CHIPS = [5,10,15,20,25,30,35,40,50,60,70,80,90,100,120];
-const R_CHIPS = [5,6,8,10,12,15,20];
-const lastFocused = {}; // eid -> {el, f, si}
 
 function renderWorkout() {
   const wrap = document.getElementById('workoutWrap');
@@ -986,17 +976,6 @@ function buildExCard(ex, sd, reps, lastW) {
       </div>`;
   }
 
-  const quickChips = `
-    <div class="quick-chips" data-eid="${ex.id}">
-      <div class="qc-row">
-        <span class="qc-label">KG</span>
-        <div class="qc-strip">${W_CHIPS.map(v=>`<span class="qc-chip" data-f="w" data-v="${v}">${v}</span>`).join('')}</div>
-      </div>
-      <div class="qc-row">
-        <span class="qc-label">REPS</span>
-        <div class="qc-strip">${R_CHIPS.map(v=>`<span class="qc-chip" data-f="r" data-v="${v}">${v}</span>`).join('')}</div>
-      </div>
-    </div>`;
 
   return `
     <div class="ex-card${allDone?' done':''}" data-eid="${ex.id}">
@@ -1024,7 +1003,6 @@ function buildExCard(ex, sd, reps, lastW) {
         ${setsHtml}
         <button class="add-set-btn" data-eid="${ex.id}">+ Satz hinzufügen</button>
       </div>
-      ${quickChips}
     </div>`;
 }
 
@@ -1048,14 +1026,6 @@ function attachWorkoutListeners(wrap, sd) {
 
   wrap.querySelectorAll('.set-inp').forEach(inp => {
     inp.addEventListener('click', e => e.stopPropagation());
-    inp.addEventListener('focus', () => {
-      lastFocused[inp.dataset.eid] = {el: inp, f: inp.dataset.f, si: +inp.dataset.si};
-      // highlight matching chip type
-      const qc = wrap.querySelector(`.quick-chips[data-eid="${inp.dataset.eid}"]`);
-      if (qc) {
-        qc.querySelectorAll('.qc-chip').forEach(c => c.classList.toggle('active', c.dataset.f === inp.dataset.f));
-      }
-    });
     inp.addEventListener('change', () => {
       const {eid,si,f} = inp.dataset;
       const idx = +si;
@@ -1067,23 +1037,6 @@ function attachWorkoutListeners(wrap, sd) {
       const s = curSd[eid].sets[idx];
       if (s.w && s.r) { const lw = S.getLastW(); lw[eid]={w:s.w,r:s.r}; S.setLastW(lw); }
       persistHistory(curSd);
-    });
-  });
-
-  wrap.querySelectorAll('.qc-chip').forEach(chip => {
-    chip.addEventListener('click', e => {
-      e.stopPropagation();
-      const eid = chip.closest('.quick-chips').dataset.eid;
-      const {v, f} = chip.dataset;
-      const focused = lastFocused[eid];
-      if (focused && focused.f === f) {
-        focused.el.value = v;
-        focused.el.dispatchEvent(new Event('change'));
-      } else {
-        // fill first empty input of that type
-        const inp = wrap.querySelector(`.set-inp[data-eid="${eid}"][data-f="${f}"]`);
-        if (inp) { inp.value = v; inp.dispatchEvent(new Event('change')); lastFocused[eid] = {el:inp,f,si:+inp.dataset.si}; }
-      }
     });
   });
 
