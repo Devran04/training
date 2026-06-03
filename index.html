@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0A0A0A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="IRON LOG">
+  <title>IRON LOG</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0A0A0A;
+      --surface: #111111;
+      --surface-2: #161616;
+      --surface-3: #1A1A1A;
+      --border: #1E1E1E;
+      --border-2: #282828;
+      --accent: #00FF87;
+      --accent-dim: rgba(0,255,135,0.15);
+      --accent-glow: rgba(0,255,135,0.07);
+      --accent-border: rgba(0,255,135,0.3);
+      --text-1: #F0F0F0;
+      --text-2: #888888;
+      --text-3: #444444;
+      --text-4: #2A2A2A;
+      --danger: #FF4444;
+      --completed-bg: #0C1C12;
+      --font-mono: 'Space Mono', monospace;
+      --font-sans: 'DM Sans', sans-serif;
+      --r: 8px;
+      --r-sm: 4px;
+      --r-lg: 12px;
+      --nav-h: 60px;
+      --header-h: 52px;
+      --t: 180ms ease;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { height: 100%; }
+
+    body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text-1);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.6;
+    }
+
+    #app { height: 100%; display: flex; flex-direction: column; }
+
+    /* ── HEADER ─────────────────────────── */
+    .hdr {
+      height: var(--header-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 10;
+    }
+
+    .logo {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      color: var(--text-1);
+    }
+    .logo em { color: var(--accent); font-style: normal; }
+
+    .hdr-date {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-3);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    /* ── CONTENT ────────────────────────── */
+    .content {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .tab-pane {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-bottom: calc(var(--nav-h) + 12px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--t);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tab-pane.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+
+    /* ── BOTTOM NAV ─────────────────────── */
+    .nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: var(--nav-h);
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      cursor: pointer;
+      color: var(--text-4);
+      transition: color var(--t);
+      user-select: none;
+      min-height: 44px;
+    }
+
+    .nav-item.active { color: var(--accent); }
+
+    .nav-item svg { width: 20px; height: 20px; stroke-width: 1.5; }
+
+    .nav-lbl {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    /* ── DAY SELECTOR ───────────────────── */
+    .day-sel {
+      display: flex;
+      gap: 6px;
+      padding: 14px 16px 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .day-sel::-webkit-scrollbar { display: none; }
+
+    .day-chip {
+      flex-shrink: 0;
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      cursor: pointer;
+      transition: all var(--t);
+      background: transparent;
+      min-height: 30px;
+      display: flex;
+      align-items: center;
+    }
+
+    .day-chip:active { transform: scale(0.95); }
+    .day-chip:hover { border-color: var(--border-2); color: var(--text-2); }
+
+    .day-chip.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    /* ── WORKOUT HEADER ─────────────────── */
+    .workout-hdr {
+      padding: 16px 16px 14px;
+    }
+
+    .wk-day-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 5px;
+    }
+
+    .wk-title {
+      font-size: 21px;
+      font-weight: 700;
+      color: var(--text-1);
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+
+    .wk-title small {
+      display: block;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text-2);
+      margin-top: 2px;
+      letter-spacing: 0;
+    }
+
+    .muscle-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+
+    .muscle-tag {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: var(--text-2);
+      padding: 3px 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+    }
+
+    /* ── SECTION HEADER ─────────────────── */
+    .sec-hdr {
+      padding: 14px 16px 7px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-4);
+      border-top: 1px solid var(--border);
+      margin-top: 2px;
+    }
+
+    /* ── EXERCISE CARD ──────────────────── */
+    .ex-card {
+      margin: 0 10px 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      transition: border-color var(--t);
+    }
+
+    .ex-card.done { border-color: var(--accent-border); }
+
+    .ex-hdr { padding: 13px 13px 11px; }
+
+    .ex-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+
+    .ex-name-wrap { flex: 1; min-width: 0; }
+
+    .ex-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-1);
+      line-height: 1.25;
+    }
+
+    .ex-replacement {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-2);
+      text-decoration: line-through;
+      margin-top: 1px;
+    }
+
+    .ex-name-new {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1.25;
+    }
+
+    .custom-tag {
+      flex-shrink: 0;
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent-border);
+      padding: 2px 6px;
+      border-radius: var(--r-sm);
+      margin-top: 2px;
+    }
+
+    .ex-muscles {
+      font-size: 11px;
+      color: var(--text-2);
+      letter-spacing: 0.02em;
+      margin-bottom: 9px;
+    }
+
+    .ex-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .ex-sets-info {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-1);
+    }
+
+    .ex-last {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-3);
+    }
+
+    .ex-last strong { color: var(--text-2); font-weight: 400; }
+
+    .ex-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-replace {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 5px 9px;
+      cursor: pointer;
+      background: transparent;
+      transition: all var(--t);
+      min-height: 28px;
+    }
+
+    .btn-replace:active { transform: scale(0.95); }
+    .btn-replace:hover { border-color: var(--border-2); color: var(--text-2); }
+
+    .btn-tips {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      transition: color var(--t);
+      padding: 5px 0;
+      min-height: 28px;
+    }
+
+    .btn-tips:hover { color: var(--text-2); }
+
+    .btn-tips svg {
+      width: 12px; height: 12px;
+      transition: transform var(--t);
+    }
+
+    .btn-tips.open svg { transform: rotate(180deg); }
+
+    .tips-panel {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 280ms ease;
+    }
+
+    .tips-panel.open { max-height: 150px; }
+
+    .tips-content {
+      padding: 10px 13px 12px;
+      font-size: 12px;
+      color: var(--text-2);
+      line-height: 1.65;
+      border-top: 1px solid var(--border);
+      font-style: italic;
+    }
+
+    /* ── SET LOGGER ─────────────────────── */
+    .sets-wrap { padding: 0 10px 12px; }
+
+    .set-row {
+      display: grid;
+      grid-template-columns: 22px 1fr 1fr 36px;
+      gap: 6px;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: var(--r-sm);
+      border: 1px solid var(--border);
+      margin-bottom: 5px;
+      background: var(--surface-2);
+      transition: background var(--t), border-color var(--t);
+    }
+
+    .set-row.done {
+      background: var(--completed-bg);
+      border-color: rgba(0,255,135,0.18);
+    }
+
+    .set-num {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-3);
+      text-align: center;
+    }
+
+    .set-row.done .set-num { color: var(--accent); }
+
+    .set-field {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+    }
+
+    .set-field-lbl {
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-4);
+    }
+
+    .set-row.done .set-field-lbl { color: rgba(0,255,135,0.4); }
+
+    .set-inp {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-1);
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 700;
+      width: 100%;
+      text-align: center;
+      padding: 0;
+      caret-color: var(--accent);
+    }
+
+    .set-inp::placeholder { color: var(--text-4); }
+
+    .set-row.done .set-inp { color: rgba(240,240,240,0.7); }
+
+    .set-chk {
+      width: 30px;
+      height: 30px;
+      border: 1.5px solid var(--border-2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--t);
+      flex-shrink: 0;
+    }
+
+    .set-chk:active { transform: scale(0.9); }
+
+    .set-row.done .set-chk {
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    .set-chk svg {
+      width: 14px; height: 14px;
+      stroke: var(--bg);
+      opacity: 0;
+      transition: opacity var(--t);
+    }
+
+    .set-row.done .set-chk svg { opacity: 1; }
+
+    /* ── SESSION COMPLETE ───────────────── */
+    .session-done {
+      margin: 10px;
+      padding: 16px;
+      border: 1px solid var(--accent-border);
+      border-radius: var(--r-lg);
+      background: var(--accent-glow);
+      text-align: center;
+      display: none;
+    }
+
+    .session-done.show { display: block; }
+
+    .session-done-t {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .session-done-s { font-size: 12px; color: var(--text-2); }
+
+    /* ── REST DAY ───────────────────────── */
+    .rest-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 55vh;
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .rest-icon {
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--border-2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .rest-icon svg { width: 24px; height: 24px; stroke: var(--text-3); stroke-width: 1.5; }
+
+    .rest-title {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: var(--text-1);
+      margin-bottom: 6px;
+    }
+
+    .rest-sub {
+      font-size: 12px;
+      color: var(--text-3);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    /* ── MODAL ──────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 200;
+      display: flex;
+      align-items: flex-end;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--t);
+    }
+
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal-sheet {
+      width: 100%;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-radius: 16px 16px 0 0;
+      padding: 0 18px 32px;
+      transform: translateY(100%);
+      transition: transform 260ms ease;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding-bottom: calc(32px + env(safe-area-inset-bottom, 0));
+    }
+
+    .modal-overlay.open .modal-sheet { transform: translateY(0); }
+
+    .modal-pull {
+      width: 36px; height: 4px;
+      background: var(--border-2);
+      border-radius: 2px;
+      margin: 14px auto 22px;
+    }
+
+    .modal-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 4px;
+    }
+
+    .modal-ex-name {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-1);
+      margin-bottom: 22px;
+      line-height: 1.2;
+    }
+
+    .modal-inp {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      color: var(--text-1);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      padding: 13px 14px;
+      outline: none;
+      transition: border-color var(--t);
+      margin-bottom: 14px;
+    }
+
+    .modal-inp:focus { border-color: var(--accent); }
+    .modal-inp::placeholder { color: var(--text-4); }
+
+    .modal-btns { display: flex; gap: 10px; }
+
+    .btn-p {
+      flex: 1;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: var(--r);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 13px;
+      cursor: pointer;
+      transition: opacity var(--t);
+      min-height: 44px;
+    }
+
+    .btn-p:active { opacity: 0.85; }
+
+    .btn-s {
+      padding: 13px 18px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      color: var(--text-2);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--t);
+      min-height: 44px;
+    }
+
+    .btn-s:active { border-color: var(--border-2); color: var(--text-1); }
+
+    /* ── HISTORY TAB ────────────────────── */
+    .tab-hdr {
+      padding: 18px 16px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab-hdr-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-1);
+    }
+
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+    }
+
+    .empty-state-t {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-4);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .empty-state-s { font-size: 12px; color: var(--text-3); }
+
+    .sess-card {
+      margin: 7px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      transition: border-color var(--t);
+    }
+
+    .sess-card:hover { border-color: var(--border-2); }
+
+    .sess-hdr {
+      padding: 13px 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .sess-date {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      margin-bottom: 2px;
+    }
+
+    .sess-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-1);
+    }
+
+    .sess-meta {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 2px;
+    }
+
+    .sess-chevron svg {
+      width: 16px; height: 16px;
+      stroke: var(--text-3);
+      transition: transform var(--t);
+    }
+
+    .sess-card.open .sess-chevron svg { transform: rotate(180deg); }
+
+    .sess-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 280ms ease;
+      border-top: 1px solid transparent;
+    }
+
+    .sess-card.open .sess-body {
+      max-height: 2000px;
+      border-top-color: var(--border);
+    }
+
+    .hist-ex {
+      padding: 10px 13px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hist-ex:last-child { border-bottom: none; }
+
+    .hist-ex-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-1);
+      margin-bottom: 5px;
+    }
+
+    .hist-sets { display: flex; flex-wrap: wrap; gap: 5px; }
+
+    .hist-chip {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-2);
+      background: var(--surface-2);
+      padding: 3px 8px;
+      border-radius: var(--r-sm);
+      border: 1px solid var(--border);
+    }
+
+    /* ── PLAN TAB ───────────────────────── */
+    .plan-day-card {
+      margin: 7px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      transition: border-color var(--t);
+    }
+
+    .plan-day-card.today { border-color: var(--accent-border); }
+    .plan-day-card:hover { border-color: var(--border-2); }
+    .plan-day-card.today:hover { border-color: var(--accent); }
+
+    .plan-day-hdr {
+      padding: 13px 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .plan-day-lbl {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 2px;
+    }
+
+    .plan-day-card.today .plan-day-lbl { color: var(--accent); }
+
+    .plan-day-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-1);
+    }
+
+    .today-badge {
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent-border);
+      padding: 3px 8px;
+      border-radius: 100px;
+    }
+
+    .plan-day-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 300ms ease;
+      border-top: 1px solid transparent;
+    }
+
+    .plan-day-card.open .plan-day-body {
+      max-height: 3000px;
+      border-top-color: var(--border);
+    }
+
+    .plan-sec-lbl {
+      padding: 8px 13px 4px;
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-4);
+    }
+
+    .plan-ex-row {
+      padding: 9px 13px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .plan-ex-row:last-child { border-bottom: none; }
+
+    .plan-ex-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-1);
+      margin-bottom: 2px;
+    }
+
+    .plan-ex-muscles { font-size: 11px; color: var(--text-3); }
+
+    .plan-ex-sets {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-3);
+      white-space: nowrap;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── RESPONSIVE ─────────────────────── */
+    @media (min-width: 560px) {
+      .content, .nav {
+        max-width: 480px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .hdr { max-width: 480px; margin: 0 auto; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <header class="hdr">
+    <div class="logo">IRON<em>LOG</em></div>
+    <div class="hdr-date" id="hdrDate"></div>
+  </header>
+
+  <div class="content">
+    <!-- TODAY -->
+    <div class="tab-pane active" id="tab-today">
+      <div class="day-sel" id="daySel"></div>
+      <div id="workoutWrap"></div>
+      <div class="session-done" id="sessDone">
+        <div class="session-done-t">SESSION COMPLETE</div>
+        <div class="session-done-s">All sets logged. Great work.</div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="tab-pane" id="tab-history">
+      <div class="tab-hdr"><div class="tab-hdr-title">History</div></div>
+      <div id="histWrap"></div>
+    </div>
+
+    <!-- PLAN -->
+    <div class="tab-pane" id="tab-plan">
+      <div class="tab-hdr"><div class="tab-hdr-title">Weekly Plan</div></div>
+      <div id="planWrap"></div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-item active" data-tab="today">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
+      </svg>
+      <span class="nav-lbl">Today</span>
+    </div>
+    <div class="nav-item" data-tab="history">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 7v5l3.5 3.5" stroke-linecap="round"/>
+      </svg>
+      <span class="nav-lbl">History</span>
+    </div>
+    <div class="nav-item" data-tab="plan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <rect x="5" y="3" width="14" height="18" rx="2"/>
+        <path d="M9 8h6M9 12h6M9 16h4" stroke-linecap="round"/>
+      </svg>
+      <span class="nav-lbl">Plan</span>
+    </div>
+  </nav>
+</div>
+
+<!-- Replace Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-sheet">
+    <div class="modal-pull"></div>
+    <div class="modal-lbl">Replace Exercise</div>
+    <div class="modal-ex-name" id="modalName"></div>
+    <input class="modal-inp" id="modalInp" type="text" placeholder="New exercise name..." autocomplete="off" autocorrect="off" spellcheck="false">
+    <div class="modal-btns">
+      <button class="btn-s" id="modalCancel">Cancel</button>
+      <button class="btn-p" id="modalConfirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// PLAN DATA
+// ─────────────────────────────────────────────────────────────
+const PLAN = {
+  monday: {
+    label: 'MON', name: 'Chest + Back A', subtitle: 'Heavy',
+    muscles: ['Upper Pecs', 'Lats', 'Mid Traps', 'Front Delt', 'Rear Delt'],
+    sections: [
+      { title: 'Chest', exercises: [
+        { id:'mo1', name:'Upper Chest Press', muscles:'Upper Pecs, Front Deltoid', sets:3, reps:'6–8', tip:'Set bench to ~30°, keep elbows at 45° to body, control the eccentric' },
+        { id:'mo2', name:'Wide Chest Press', muscles:'Pecs (outer), Front Deltoid', sets:3, reps:'8–10', tip:'Grip wider than shoulder-width, feel the stretch at the bottom' }
+      ]},
+      { title: 'Back', exercises: [
+        { id:'mo3', name:'Lat Pulldown Mid Grip', muscles:'Latissimus, Biceps, Rear Delt', sets:3, reps:'8–10', tip:'Pull to upper chest, lean back slightly, don\'t swing' },
+        { id:'mo4', name:'Chest Supported Row', muscles:'Mid Traps, Rhomboids, Rear Delt', sets:3, reps:'10–12', tip:'Chest flat on pad at all times, retract scapula fully' }
+      ]},
+      { title: 'Finisher', exercises: [
+        { id:'mo5', name:'Butterfly', muscles:'Pecs (inner), Front Deltoid', sets:3, reps:'12–15', tip:'Slight bend in elbows, squeeze hard at center, don\'t go too deep' },
+        { id:'mo6', name:'Row Machine Lat', muscles:'Latissimus, Teres Major', sets:3, reps:'12–15', tip:'Pull elbows close to body, focus on lat contraction not arm pull' }
+      ]}
+    ]
+  },
+  tuesday: {
+    label: 'TUE', name: 'Shoulders + Arms A', subtitle: '',
+    muscles: ['All Delts', 'Triceps', 'Biceps', 'Brachialis'],
+    sections: [
+      { title: 'Shoulders', exercises: [
+        { id:'tu1', name:'Arnold Press', muscles:'All Deltoid heads, Upper Traps', sets:3, reps:'8–10', tip:'Start with palms facing you, rotate out as you press up — full range of motion' },
+        { id:'tu2', name:'Cable Seitheben', muscles:'Medial Deltoid', sets:3, reps:'To failure', tip:'Slight forward lean, thumb slightly down, stop at shoulder height — go to failure' },
+        { id:'tu3', name:'Hintere Schulter Kabel', muscles:'Rear Deltoid, Rhomboids', sets:3, reps:'12–15', tip:'Cable at face height, pull to side with slight elbow bend, squeeze rear delt' }
+      ]},
+      { title: 'Trizeps', exercises: [
+        { id:'tu4', name:'Trizeps Extensions', muscles:'Triceps (all heads)', sets:3, reps:'10–12', tip:'Keep elbows fixed, only forearm moves, full extension at bottom' },
+        { id:'tu5', name:'Overhead Extensions', muscles:'Triceps Long Head', sets:3, reps:'10–12', tip:'Elbows close to head, stretch fully at top, press smoothly' }
+      ]},
+      { title: 'Bizeps', exercises: [
+        { id:'tu6', name:'Spider Curls', muscles:'Biceps (peak), Brachialis', sets:3, reps:'10–12', tip:'Lie on incline bench face down, full hang at bottom, squeeze hard at top' },
+        { id:'tu7', name:'Hammer Curls Kabel', muscles:'Brachialis, Brachioradialis', sets:3, reps:'12–15', tip:'Neutral grip, cable keeps constant tension, don\'t swing' }
+      ]}
+    ]
+  },
+  wednesday: {
+    label: 'WED', name: 'Legs A', subtitle: '',
+    muscles: ['Quads', 'Hamstrings', 'Glutes', 'Calves', 'Core'],
+    sections: [
+      { title: 'Warmup', exercises: [
+        { id:'we1', name:'10min Laufband', muscles:'Cardiovascular warmup', sets:1, reps:'10 min', tip:'Moderate pace, prepare joints' }
+      ]},
+      { title: 'Legs', exercises: [
+        { id:'we2', name:'Leg Press', muscles:'Quads, Glutes, Hamstrings', sets:4, reps:'8–10', tip:'Feet shoulder-width, go deep (90°+), don\'t lock knees at top' },
+        { id:'we3', name:'Leg Extensions', muscles:'Quadriceps (isolation)', sets:3, reps:'12–15', tip:'Slow eccentric (3 sec down), squeeze hard at top' },
+        { id:'we4', name:'Leg Curl', muscles:'Hamstrings', sets:3, reps:'10–12', tip:'Hips flat on pad, full range, controlled tempo' },
+        { id:'we5', name:'Waden', muscles:'Gastrocnemius, Soleus', sets:4, reps:'15–20', tip:'Full stretch at bottom, hold contraction 1 sec at top' },
+        { id:'we6', name:'Core', muscles:'Core, Abs', sets:3, reps:'Varies', tip:'Plank variations or cable crunches — 3 sets' }
+      ]}
+    ]
+  },
+  thursday: {
+    label: 'THU', name: 'Chest + Back B', subtitle: 'Different Focus',
+    muscles: ['Upper Pecs', 'Entire Back', 'Mid Traps', 'Lats', 'Biceps'],
+    sections: [
+      { title: 'Chest', exercises: [
+        { id:'th1', name:'Upper Chest Press', muscles:'Upper Pecs, Front Deltoid', sets:3, reps:'8–10', tip:'Same as Monday but focus on mind-muscle connection' },
+        { id:'th2', name:'Butterfly', muscles:'Pecs (inner), Front Deltoid', sets:3, reps:'12–15', tip:'Lighter weight, full stretch, more reps' }
+      ]},
+      { title: 'Back', exercises: [
+        { id:'th3', name:'Langhantel Rows', muscles:'Entire Back, Biceps', sets:4, reps:'6–8', tip:'Hinge to ~45°, row to lower chest, lead with elbows' },
+        { id:'th4', name:'Row Machine Lat', muscles:'Latissimus, Teres Major', sets:3, reps:'10–12', tip:'Focus on lat contraction, pull elbows past torso' }
+      ]},
+      { title: 'Additional', exercises: [
+        { id:'th5', name:'Chest Supported Row', muscles:'Mid Traps, Rhomboids', sets:3, reps:'12–15', tip:'Higher reps today, squeeze and hold 1 sec' },
+        { id:'th6', name:'Lat Pulldown', muscles:'Latissimus, Biceps', sets:3, reps:'10–12', tip:'Wide grip option today, full stretch at top' }
+      ]}
+    ]
+  },
+  friday: {
+    label: 'FRI', name: 'Shoulders + Arms B', subtitle: '',
+    muscles: ['All Delts', 'Biceps', 'Triceps', 'Brachialis'],
+    sections: [
+      { title: 'Shoulders', exercises: [
+        { id:'fr1', name:'Arnold Press', muscles:'All Deltoid heads', sets:4, reps:'8–10', tip:'Same as Tuesday, slightly higher volume' },
+        { id:'fr2', name:'Seitheben', muscles:'Medial Deltoid', sets:3, reps:'12–15', tip:'Free weights today, focus on the squeeze' },
+        { id:'fr3', name:'Hintere Schulter Kabel', muscles:'Rear Deltoid', sets:3, reps:'12–15', tip:'Use rope attachment, pull apart at face level' }
+      ]},
+      { title: 'Bizeps', exercises: [
+        { id:'fr4', name:'Spider Curls', muscles:'Biceps', sets:3, reps:'10–12', tip:'Squeeze harder today, pause at top' },
+        { id:'fr5', name:'Hammer Curls', muscles:'Brachialis', sets:3, reps:'12–15', tip:'Dumbbells today, alternate arms' }
+      ]},
+      { title: 'Trizeps', exercises: [
+        { id:'fr6', name:'Trizeps Extensions', muscles:'Triceps', sets:3, reps:'10–12', tip:'Cable variation, keep elbows tucked' },
+        { id:'fr7', name:'Overhead Extensions', muscles:'Triceps Long Head', sets:3, reps:'10–12', tip:'EZ bar or dumbbell, full stretch' }
+      ]}
+    ]
+  },
+  saturday: {
+    label: 'SAT', name: 'Legs B', subtitle: '',
+    muscles: ['Quads', 'Hamstrings', 'Glutes', 'Calves', 'Core'],
+    sections: [
+      { title: 'Warmup', exercises: [
+        { id:'sa1', name:'10min Laufband', muscles:'Cardiovascular warmup', sets:1, reps:'10 min', tip:'Moderate pace, prepare joints' }
+      ]},
+      { title: 'Legs', exercises: [
+        { id:'sa2', name:'Leg Press', muscles:'Quads, Glutes, Hamstrings', sets:4, reps:'8–10', tip:'Feet shoulder-width, go deep (90°+), don\'t lock knees at top' },
+        { id:'sa3', name:'Leg Extensions', muscles:'Quadriceps (isolation)', sets:3, reps:'12–15', tip:'Slow eccentric (3 sec down), squeeze hard at top' },
+        { id:'sa4', name:'Leg Curl', muscles:'Hamstrings', sets:3, reps:'10–12', tip:'Hips flat on pad, full range, controlled tempo' },
+        { id:'sa5', name:'Waden', muscles:'Gastrocnemius, Soleus', sets:4, reps:'15–20', tip:'Full stretch at bottom, hold contraction 1 sec at top' },
+        { id:'sa6', name:'Core', muscles:'Core, Abs', sets:3, reps:'Varies', tip:'Plank variations or cable crunches — 3 sets' }
+      ]}
+    ]
+  },
+  sunday: {
+    label: 'SUN', name: 'Rest Day', subtitle: 'Recovery',
+    muscles: [], sections: []
+  }
+};
+
+const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+
+// ─────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────
+let currentDay = DAYS[new Date().getDay()];
+let activeTab = 'today';
+let modalTarget = null;
+
+// ─────────────────────────────────────────────────────────────
+// STORAGE
+// ─────────────────────────────────────────────────────────────
+const S = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+  dateStr: d => (d || new Date()).toISOString().slice(0, 10),
+  sessKey: d => 'sess_' + (d || S.dateStr()),
+  repKey: () => 'rep_' + S.dateStr(),
+  getSession: d => S.get(S.sessKey(d)) || {},
+  setSession: (data, d) => S.set(S.sessKey(d), data),
+  getReps: () => S.get(S.repKey()) || {},
+  setReps: r => S.set(S.repKey(), r),
+  getLastW: () => S.get('lastW') || {},
+  setLastW: lw => S.set('lastW', lw),
+  getHistory: () => S.get('history') || [],
+  saveHistory: sessions => S.set('history', sessions.slice(0, 90))
+};
+
+// ─────────────────────────────────────────────────────────────
+// HEADER
+// ─────────────────────────────────────────────────────────────
+function initHeader() {
+  const d = new Date();
+  document.getElementById('hdrDate').textContent = d.toLocaleDateString('en-US', {
+    weekday:'short', month:'short', day:'numeric'
+  }).toUpperCase();
+}
+
+// ─────────────────────────────────────────────────────────────
+// DAY SELECTOR
+// ─────────────────────────────────────────────────────────────
+function renderDaySel() {
+  document.getElementById('daySel').innerHTML = DAYS.map(k =>
+    `<div class="day-chip${k===currentDay?' active':''}" data-day="${k}">${PLAN[k].label}</div>`
+  ).join('');
+  document.querySelectorAll('.day-chip').forEach(c =>
+    c.addEventListener('click', () => { currentDay = c.dataset.day; renderDaySel(); renderWorkout(); })
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// WORKOUT RENDER
+// ─────────────────────────────────────────────────────────────
+function renderWorkout() {
+  const wrap = document.getElementById('workoutWrap');
+  const day = PLAN[currentDay];
+  const sd = S.getSession();
+  const reps = S.getReps();
+  const lastW = S.getLastW();
+
+  if (currentDay === 'sunday') {
+    wrap.innerHTML = `
+      <div class="rest-screen">
+        <div class="rest-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2z"/><path d="M8 12h8M12 8v8" opacity="0.3"/></svg></div>
+        <div class="rest-title">REST DAY</div>
+        <div class="rest-sub">Recovery — Eat well. Sleep well.</div>
+      </div>`;
+    document.getElementById('sessDone').classList.remove('show');
+    return;
+  }
+
+  let html = `<div class="workout-hdr">
+    <div class="wk-day-lbl">${day.label}${day.subtitle ? ' — ' + day.subtitle.toUpperCase() : ''}</div>
+    <div class="wk-title">${day.name}</div>
+    <div class="muscle-tags">${day.muscles.map(m => `<span class="muscle-tag">${m}</span>`).join('')}</div>
+  </div>`;
+
+  day.sections.forEach((sec, si) => {
+    html += `<div class="sec-hdr"${si===0?' style="border-top:none;"':''}>${sec.title}</div>`;
+    sec.exercises.forEach(ex => {
+      html += buildExCard(ex, sd, reps, lastW);
+    });
+  });
+
+  wrap.innerHTML = html;
+  attachWorkoutListeners(wrap, sd);
+  checkComplete(sd);
+}
+
+function buildExCard(ex, sd, reps, lastW) {
+  const exData = sd[ex.id] || { sets: [] };
+  const last = lastW[ex.id];
+  const rep = reps[ex.id];
+  const isCustom = !!rep;
+  const displayName = rep || ex.name;
+
+  let setsHtml = '';
+  for (let i = 0; i < ex.sets; i++) {
+    const setD = exData.sets[i] || {};
+    const done = !!setD.done;
+    const w = setD.w !== undefined ? setD.w : (last ? last.w : '');
+    const r = setD.r !== undefined ? setD.r : '';
+    setsHtml += `
+      <div class="set-row${done?' done':''}" data-eid="${ex.id}" data-si="${i}">
+        <div class="set-num">${i+1}</div>
+        <div class="set-field">
+          <div class="set-field-lbl">KG</div>
+          <input class="set-inp" type="number" inputmode="decimal" placeholder="—" value="${w}" data-eid="${ex.id}" data-si="${i}" data-f="w">
+        </div>
+        <div class="set-field">
+          <div class="set-field-lbl">REPS</div>
+          <input class="set-inp" type="number" inputmode="numeric" placeholder="—" value="${r}" data-eid="${ex.id}" data-si="${i}" data-f="r">
+        </div>
+        <div class="set-chk" data-eid="${ex.id}" data-si="${i}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+        </div>
+      </div>`;
+  }
+
+  const allDone = exData.sets.length >= ex.sets && exData.sets.slice(0, ex.sets).every(s => s && s.done);
+
+  return `
+    <div class="ex-card${allDone?' done':''}" data-eid="${ex.id}">
+      <div class="ex-hdr">
+        <div class="ex-top">
+          <div class="ex-name-wrap">
+            ${isCustom
+              ? `<div class="ex-name-new">${displayName}</div><div class="ex-replacement">${ex.name}</div>`
+              : `<div class="ex-name">${displayName}</div>`}
+          </div>
+          ${isCustom ? '<span class="custom-tag">CUSTOM</span>' : ''}
+        </div>
+        <div class="ex-muscles">${ex.muscles}</div>
+        <div class="ex-meta">
+          <div class="ex-sets-info">${ex.sets} × ${ex.reps}</div>
+          ${last ? `<div class="ex-last">Last: <strong>${last.w}kg × ${last.r}</strong></div>` : ''}
+        </div>
+        <div class="ex-actions">
+          <button class="btn-replace" data-eid="${ex.id}" data-name="${escHtml(displayName)}">Replace</button>
+          <button class="btn-tips" data-eid="${ex.id}">Tips <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></button>
+        </div>
+      </div>
+      <div class="tips-panel" id="tp_${ex.id}">
+        <div class="tips-content">${ex.tip}</div>
+      </div>
+      <div class="sets-wrap">${setsHtml}</div>
+    </div>`;
+}
+
+function escHtml(s) { return s.replace(/"/g, '&quot;'); }
+
+function attachWorkoutListeners(wrap, sd) {
+  const todayStr = S.dateStr();
+
+  wrap.querySelectorAll('.btn-tips').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const panel = document.getElementById('tp_' + btn.dataset.eid);
+      const open = panel.classList.toggle('open');
+      btn.classList.toggle('open', open);
+    });
+  });
+
+  wrap.querySelectorAll('.btn-replace').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      openModal(btn.dataset.eid, btn.dataset.name);
+    });
+  });
+
+  wrap.querySelectorAll('.set-inp').forEach(inp => {
+    inp.addEventListener('click', e => e.stopPropagation());
+    inp.addEventListener('change', () => {
+      const { eid, si, f } = inp.dataset;
+      const idx = +si;
+      const curSd = S.getSession();
+      if (!curSd[eid]) curSd[eid] = { sets: [] };
+      if (!curSd[eid].sets[idx]) curSd[eid].sets[idx] = {};
+      curSd[eid].sets[idx][f] = inp.value;
+      S.setSession(curSd);
+      const s = curSd[eid].sets[idx];
+      if (s.w && s.r) {
+        const lw = S.getLastW();
+        lw[eid] = { w: s.w, r: s.r };
+        S.setLastW(lw);
+      }
+      persistHistory(curSd);
+    });
+  });
+
+  wrap.querySelectorAll('.set-chk').forEach(chk => {
+    chk.addEventListener('click', e => { e.stopPropagation(); toggleSet(chk.dataset.eid, +chk.dataset.si); });
+  });
+
+  wrap.querySelectorAll('.set-row').forEach(row => {
+    row.addEventListener('click', e => {
+      if (e.target.closest('.set-inp') || e.target.closest('.set-chk')) return;
+      toggleSet(row.dataset.eid, +row.dataset.si);
+    });
+  });
+}
+
+function toggleSet(eid, idx) {
+  const sd = S.getSession();
+  if (!sd[eid]) sd[eid] = { sets: [] };
+  if (!sd[eid].sets[idx]) sd[eid].sets[idx] = {};
+  sd[eid].sets[idx].done = !sd[eid].sets[idx].done;
+  S.setSession(sd);
+
+  const row = document.querySelector(`.set-row[data-eid="${eid}"][data-si="${idx}"]`);
+  if (row) row.classList.toggle('done', sd[eid].sets[idx].done);
+
+  // Update card done state
+  const day = PLAN[currentDay];
+  let ex;
+  for (const sec of day.sections) { ex = sec.exercises.find(e => e.id === eid); if (ex) break; }
+  if (ex) {
+    const allDone = sd[eid].sets.length >= ex.sets && sd[eid].sets.slice(0, ex.sets).every(s => s && s.done);
+    document.querySelector(`.ex-card[data-eid="${eid}"]`)?.classList.toggle('done', allDone);
+  }
+
+  checkComplete(sd);
+  persistHistory(sd);
+}
+
+function checkComplete(sd) {
+  const day = PLAN[currentDay];
+  if (!day || !day.sections.length) return;
+  let all = true;
+  outer: for (const sec of day.sections) {
+    for (const ex of sec.exercises) {
+      const d = sd[ex.id] || { sets: [] };
+      if (!(d.sets.length >= ex.sets && d.sets.slice(0, ex.sets).every(s => s && s.done))) { all = false; break outer; }
+    }
+  }
+  document.getElementById('sessDone').classList.toggle('show', all);
+}
+
+function persistHistory(sd) {
+  const day = PLAN[currentDay];
+  const exercises = [];
+  for (const sec of day.sections) {
+    for (const ex of sec.exercises) {
+      const d = sd[ex.id];
+      if (d && d.sets && d.sets.some(s => s && s.done)) {
+        exercises.push({ id: ex.id, name: ex.name, sets: d.sets.filter(s => s && (s.w || s.r)) });
+      }
+    }
+  }
+  if (!exercises.length) return;
+  const hist = S.getHistory();
+  const todayStr = S.dateStr();
+  const idx = hist.findIndex(h => h.date === todayStr);
+  const entry = { date: todayStr, dayKey: currentDay, dayName: day.name, exercises };
+  if (idx >= 0) hist[idx] = entry; else hist.unshift(entry);
+  S.saveHistory(hist);
+}
+
+// ─────────────────────────────────────────────────────────────
+// MODAL
+// ─────────────────────────────────────────────────────────────
+function openModal(eid, name) {
+  modalTarget = eid;
+  document.getElementById('modalName').textContent = name;
+  const reps = S.getReps();
+  document.getElementById('modalInp').value = reps[eid] || '';
+  document.getElementById('modal').classList.add('open');
+  setTimeout(() => document.getElementById('modalInp').focus(), 300);
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  modalTarget = null;
+}
+
+document.getElementById('modalCancel').addEventListener('click', closeModal);
+document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+document.getElementById('modalConfirm').addEventListener('click', () => {
+  if (!modalTarget) return;
+  const val = document.getElementById('modalInp').value.trim();
+  if (!val) return;
+  const reps = S.getReps();
+  reps[modalTarget] = val;
+  S.setReps(reps);
+  closeModal();
+  renderWorkout();
+});
+
+document.getElementById('modalInp').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('modalConfirm').click();
+  if (e.key === 'Escape') closeModal();
+});
+
+// ─────────────────────────────────────────────────────────────
+// HISTORY
+// ─────────────────────────────────────────────────────────────
+function renderHistory() {
+  const wrap = document.getElementById('histWrap');
+  const hist = S.getHistory();
+
+  if (!hist.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-state-t">No sessions yet</div><div class="empty-state-s">Log your first workout to see history here.</div></div>`;
+    return;
+  }
+
+  wrap.innerHTML = hist.map(sess => `
+    <div class="sess-card" data-date="${sess.date}">
+      <div class="sess-hdr">
+        <div>
+          <div class="sess-date">${fmtDate(sess.date)}</div>
+          <div class="sess-name">${sess.dayName}</div>
+          <div class="sess-meta">${sess.exercises.length} exercise${sess.exercises.length !== 1 ? 's' : ''} logged</div>
+        </div>
+        <div class="sess-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div>
+      </div>
+      <div class="sess-body">
+        ${sess.exercises.map(ex => `
+          <div class="hist-ex">
+            <div class="hist-ex-name">${ex.name}</div>
+            <div class="hist-sets">
+              ${ex.sets.filter(s => s && (s.w || s.r)).map((s, i) =>
+                `<span class="hist-chip">S${i+1} ${s.w ? s.w + 'kg' : '—'} × ${s.r || '—'}</span>`
+              ).join('')}
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+
+  wrap.querySelectorAll('.sess-hdr').forEach(hdr => {
+    hdr.addEventListener('click', () => hdr.closest('.sess-card').classList.toggle('open'));
+  });
+}
+
+function fmtDate(ds) {
+  const d = new Date(ds + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+}
+
+// ─────────────────────────────────────────────────────────────
+// PLAN
+// ─────────────────────────────────────────────────────────────
+function renderPlan() {
+  const todayKey = DAYS[new Date().getDay()];
+  document.getElementById('planWrap').innerHTML = DAYS.map(k => {
+    const d = PLAN[k];
+    const isToday = k === todayKey;
+    return `
+      <div class="plan-day-card${isToday?' today':''}">
+        <div class="plan-day-hdr">
+          <div>
+            <div class="plan-day-lbl">${d.label}${isToday ? ' — TODAY' : ''}</div>
+            <div class="plan-day-name">${d.name}${d.subtitle ? ' <span style="font-weight:400;color:var(--text-3);">/ ' + d.subtitle + '</span>' : ''}</div>
+          </div>
+          ${isToday ? '<span class="today-badge">TODAY</span>' : ''}
+        </div>
+        <div class="plan-day-body">
+          ${k === 'sunday' ? '<div style="padding:12px 13px;font-size:12px;color:var(--text-3);">Rest and recovery.</div>' :
+            d.sections.map(sec => `
+              <div class="plan-sec-lbl">${sec.title}</div>
+              ${sec.exercises.map(ex => `
+                <div class="plan-ex-row">
+                  <div>
+                    <div class="plan-ex-name">${ex.name}</div>
+                    <div class="plan-ex-muscles">${ex.muscles}</div>
+                  </div>
+                  <div class="plan-ex-sets">${ex.sets}×${ex.reps}</div>
+                </div>`).join('')}
+            `).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  document.querySelectorAll('.plan-day-hdr').forEach(hdr => {
+    hdr.addEventListener('click', () => hdr.closest('.plan-day-card').classList.toggle('open'));
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add('active');
+  if (tab === 'history') renderHistory();
+  if (tab === 'plan') renderPlan();
+}
+
+document.querySelectorAll('.nav-item').forEach(item =>
+  item.addEventListener('click', () => switchTab(item.dataset.tab))
+);
+
+// ─────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────
+initHeader();
+renderDaySel();
+renderWorkout();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
