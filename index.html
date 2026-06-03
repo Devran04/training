@@ -1249,8 +1249,16 @@ document.querySelectorAll('.nav-item').forEach(item=>item.addEventListener('clic
 // ─────────────────────────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────────────────────────
-renderDaySel();
-renderWorkout();
+try {
+  renderDaySel();
+  renderWorkout();
+} catch(e) {
+  document.getElementById('workoutWrap').innerHTML =
+    `<div style="padding:24px;color:#FF4444;font-family:monospace;font-size:12px;">
+      Error: ${e.message}<br><pre>${e.stack}</pre>
+    </div>`;
+  console.error(e);
+}
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
